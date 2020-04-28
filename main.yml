@@ -1,0 +1,15 @@
+- name: Play
+  hosts: all
+  gather_facts: false
+  roles:
+  - role-vlan-generator
+#  tasks:
+#   - eos_config:
+#       lines:
+#         - switchport
+#       parents:
+#         interface ethernet0 
+#     ignore_errors: true
+#     register: tmp
+#   - debug:
+#       msg: "{{ tmp.changed }}"

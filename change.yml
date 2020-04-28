@@ -1,0 +1,8 @@
+---
+target:
+ - eos1
+interface_count: 2
+switchport_mode: trunk
+access_vlan: 13
+trunk_vlan: 5,14-15
+change_mode: replace
