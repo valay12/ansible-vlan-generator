@@ -1,18 +1,22 @@
 - hosts: localhost
   connection: local
   tasks:
-    - include_vars:
+    - name: Load change variables
+      include_vars:
         file: "{{ playbook_dir }}/change.yml"
         name: change_vars
-    - include_vars:
+    - name: Load list of hosts
+      include_vars:
         file: "{{ playbook_dir }}/hosts.yml"
         name: hosts
-    - assert:
+    - name: Validate that specified target hosts in change.yml exist in hosts
+      assert:
         that:
           - "'{{ item }}' in hosts"
       loop: "{{ change_vars.target }}"
 
-    - add_host:
+    - name: Add specified target hosts in a switches inventory group
+      add_host:
         name: "{{ item }}"
         groups: switches
         ansible_host: "{{ hosts[item]['hostname'] }}"
