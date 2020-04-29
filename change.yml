@@ -1,8 +1,11 @@
 ---
+# Specify target hosts
 target:
  - eos1
+# Specify number of interfaces configured
 interface_count: 2
 switchport_mode: trunk
 access_vlan: 13
 trunk_vlan: 5,14-15
+# If trunk mode, replace will remove existing allowed vlans. add mode will add specified trunk vlans
 change_mode: replace
