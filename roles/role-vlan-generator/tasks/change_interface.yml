@@ -1,0 +1,69 @@
+- block:
+    - name: Reset interface if replace mode
+      eos_config:
+        lines:
+          - switchport
+          - "switchport mode {{ change_vars.switchport_mode }}"
+        parents: "interface {{ interface }}"
+      ignore_errors: true
+      register: tmp
+
+    - name: Set backout flag if change failed
+      set_fact:
+        change_failed: true
+      when: tmp.failed == true
+
+    - name: Add to list of commands
+      set_fact:
+        cmd_list: "{{ cmd_list + tmp.commands|default([]) }}"
+  when:
+    - change_vars.change_mode == 'replace' or change_vars.switchport_mode == 'access'
+    - change_failed == false
+
+- block:
+    - name: Set interface if access mode
+      eos_l2_interfaces:
+        config:
+          - name: "{{ interface }}"
+            access:
+              vlan: "{{ change_vars.access_vlan }}"
+        state: merged
+      ignore_errors: true
+      register: tmp
+
+    - name: Set backout flag if change failed
+      set_fact:
+        change_failed: true
+      when: tmp.failed == true
+
+    - name: Add to list of commands
+      set_fact:
+        cmd_list: "{{ cmd_list + tmp.commands|default([]) }}"
+  
+  when:
+    - change_vars.switchport_mode == 'access'
+    - change_failed == false
+
+- block:
+    - name: Set interface is trunk mode
+      eos_l2_interfaces:
+        config:
+          - name: "{{ interface }}"
+            trunk:
+              trunk_allowed_vlans: "{{ change_vars.trunk_vlan }}"
+        state: merged
+      register: tmp
+      ignore_errors: true
+
+    - name: Set backout flag if change failed
+      set_fact:
+        change_failed: true
+      when: tmp.failed == true
+
+    - name: Add to list of commands
+      set_fact:
+        cmd_list: "{{ cmd_list + tmp.commands|default([]) }}"
+
+  when: 
+    - change_vars.switchport_mode == 'trunk'
+    - change_failed == false

@@ -1,0 +1,19 @@
+---
+- name: Create vlans if needed
+  eos_vlans:
+    config:
+      - vlan_id: "{{ vlan }}"
+        name: "VLAN{{ vlan }}"
+    state: replaced
+  ignore_errors: true
+  register: tmp
+  when: change_failed == false
+
+- name: Set backout flag if change failed
+  set_fact:
+    change_failed: true
+  when: tmp.failed == true
+
+- name: Add to list of commands
+  set_fact:
+    cmd_list: "{{ cmd_list + tmp.commands|default([]) }}"

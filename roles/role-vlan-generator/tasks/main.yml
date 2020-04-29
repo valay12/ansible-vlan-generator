@@ -1,0 +1,20 @@
+---
+- name: Load change variables
+  import_tasks: load_vars.yml
+  tags: [test]
+
+- name: Pre-implement
+  import_tasks: pre_implement.yml
+  tags: [test]
+
+- name: Implement
+  import_tasks: implement.yml
+  tags: [test]
+
+- name: Post-implement
+  import_tasks: post_implement.yml
+
+- name: Backout
+  import_tasks: backout.yml
+  when: change_failed == true
+  tags: [test]

@@ -1,0 +1,6 @@
+pre_change: {}
+post_change: {}
+cmd_list: []
+change_failed: false
+change_executed: false
+

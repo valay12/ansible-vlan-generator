@@ -1,0 +1,70 @@
+---
+- debug: msg="Load variables"
+
+- name: Load change variables
+  include_vars:
+    file: "{{ playbook_dir }}/change.yml"
+    name: change_vars
+
+- name: Variables type validation
+  assert:
+    that:
+      - "change_vars.interface_count|type_debug == 'int'"
+      - "change_vars.switchport_mode == 'trunk' or change_vars.switchport_mode == 'access'"
+      - "change_vars.access_vlan|default(0)|type_debug|default('') == 'int'"
+      - "change_vars.trunk_vlan|default('')|expand_vlans != 'error'"
+      - "change_vars.change_mode == 'replace' or change_vars.change_mode == 'add'"
+  ignore_errors: false
+
+- name: Gather device facts
+  eos_facts:
+    gather_subset:
+      - '!all'
+      - '!min'
+    gather_network_resources: all
+  tags: [skip]
+
+- name: Get interface list
+  eos_command:
+    commands:
+      - command: show interface status
+        output: json
+  register: tmp
+
+- name: Get list of available interfaces
+  set_fact:
+    available_interfaces: "{{ available_interfaces|default([]) + [item.key] }}"
+  when: "{{ item.value.vlanInformation.vlanId|default(0) == 1 }}"
+  loop: "{{ tmp.stdout.0.interfaceStatuses|dict2items }}"
+  tags: []
+
+- assert:
+    that:
+      - change_vars.interface_count <= available_interfaces|count
+  tags: []
+
+- name: Generate list of interfaces to be changed
+  set_fact:
+    change_interfaces: "{{ available_interfaces[0:change_vars.interface_count] }}"
+
+- name: Get vlan list
+  eos_command:
+    commands:
+      - command: show vlan
+        output: json
+  register: tmp
+
+- name: Generate list of existing vlans
+  set_fact:
+    current_vlans: "{{ current_vlans|default([]) + [item.key|int] }}"
+  loop: "{{ tmp.stdout.0.vlans|dict2items }}"
+  
+- name: Check if intended access vlan needs to be created
+  set_fact:
+    create_vlan: "{{ [change_vars.access_vlan]|difference(current_vlans) }}"
+  when: "change_vars.switchport_mode == 'access'"
+
+- name: Check if trunk vlans need to be created
+  set_fact:
+    create_vlan: "{{ change_vars.trunk_vlan|expand_vlans|difference(current_vlans) }}"
+  when: "change_vars.switchport_mode == 'trunk'"

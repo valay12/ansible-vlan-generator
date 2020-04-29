@@ -1,0 +1,44 @@
+- debug: msg="Implement"
+
+- include_tasks: create_vlan.yml
+  when: create_vlan|count > 0
+  loop: "{{ create_vlan }}"
+  loop_control:
+    loop_var: vlan
+
+- include_tasks: change_interface.yml
+  loop: "{{ change_interfaces }}"
+  loop_control:
+    loop_var: interface
+
+- block:
+    - name: Reset interface if replace mode
+      eos_config:
+        lines:
+          - switchport
+          - "switchport mode {{ change_vars.switchport_mode }}"
+        parents: "interface {{ item }}"
+      when: change_vars.change_mode == 'replace' or change_vars.switchport_mode == 'access'
+      loop: "{{ change_interfaces }}"
+
+    - name: Set interface if access mode
+      eos_l2_interfaces:
+        config:
+          - name: "{{ item }}"
+            access:
+              vlan: "{{ change_vars.access_vlan }}"
+        state: merged
+      when: change_vars.switchport_mode == 'access'
+      loop: "{{ change_interfaces }}"
+
+    - name: Set interface is trunk mode
+      eos_l2_interfaces:
+        config:
+          - name: "{{ item }}"
+            trunk:
+              trunk_allowed_vlans: "{{ change_vars.trunk_vlan }}"
+        state: merged
+      when: change_vars.switchport_mode == 'trunk'
+      loop: "{{ change_interfaces }}"
+  rescue:
+    - debug: msg="Task failed"

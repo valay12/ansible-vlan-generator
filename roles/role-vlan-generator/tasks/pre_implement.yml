@@ -1,0 +1,14 @@
+---
+- debug: msg="Pre-implement"
+
+- name: Get backup config
+  eos_config:
+    backup: yes
+    backup_options:
+      dir_path: "{{ playbook_dir }}/backups"
+      filename: backup.cfg
+  register: tmp
+
+- name: Save backup path
+  set_fact:
+    backup_path: "{{ tmp.backup_path }}"

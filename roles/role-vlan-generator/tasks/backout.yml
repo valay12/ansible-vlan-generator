@@ -1,0 +1,6 @@
+---
+- debug: msg="Backout"
+
+- name: Rollback to backup configuration
+  eos_config:
+    src: "{{ backup_path }}"
