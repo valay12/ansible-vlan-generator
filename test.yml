@@ -1,3 +1,4 @@
+---
 - hosts: localhost
   connection: local
   tasks:
@@ -20,10 +21,11 @@
         ansible_user: "{{ hosts[item]['user'] }}"
         ansible_password: "{{ hosts[item]['password'] }}"
       loop: "{{ change_vars.target }}"
-  
-- name: Configure vlans
-  hosts: switches
+
+- hosts: switches
   gather_facts: false
   connection: network_cli
-  roles:
-  - role-vlan-generator
+  tasks:
+    - eos_command:
+        commands:
+          - show version
