@@ -38,7 +38,8 @@
   loop: "{{ tmp.stdout.0.interfaceStatuses|dict2items }}"
   tags: []
 
-- assert:
+- name: Verify that enough interfaces are available for change
+  assert:
     that:
       - change_vars.interface_count <= available_interfaces|count
   tags: []
