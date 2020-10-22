@@ -1,0 +1,28 @@
+---
+ - block:
+     - name: Configure trunk interface {{ interface['interface'] }} on Nexus switch {{ inventory_hostname }}
+       nxos_l2_interfaces:
+         config:
+           - name: "{{ interface['interface'] }}"
+             trunk:
+               allowed_vlans: "{{ request_vlan }}"
+         state: merged
+       register: tmp
+     - name: Append to list of commands
+       set_fact:
+         cmd_list: "{{ cmd_list + tmp.commands|default([]) }}"
+   when: ansible_network_os == 'nxos'
+   
+  - block:
+     - name: Configure trunk interface {{ interface['interface'] }} on Ios switch {{ inventory_hostname }}
+       ios_l2_interfaces:
+         config:
+           - name: "{{ interface['interface'] }}"
+             trunk:
+               allowed_vlans: "{{ request_vlan }}"
+         state: merged
+       register: tmp
+     - name: Append to list of commands
+       set_fact:
+         cmd_list: "{{ cmd_list + tmp.commands|default([]) }}"
+   when: ansible_network_os == 'ios'
