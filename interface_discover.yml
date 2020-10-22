@@ -1,0 +1,25 @@
+---
+- hosts: local
+  connection: local
+  gather_facts: true
+  tasks:
+    - name: Discover interfaces matching VM cluster {{ vm_cluster }}
+      interface_discover:
+        name: "{{ vm_cluster }}"
+      register: tmp
+    - name: Register interface list as variable
+      set_fact:
+        result: "{{ tmp.output }}"
+    - name: Verify that {{ item }} exists in inventory
+      assert:
+        that: item in groups.zone_access
+        fail_msg: "Device {{ item }} not found in inventory"
+      loop: "{{ tmp.device_list }}"
+    - name: Add {{ item }} to inventory group
+      add_host:
+        hostname: "{{ item }}"
+        ansible_host: "{{ hostvars[item].ansible_host }}"
+        ansible_network_os: "{{ hostvars[item].ansible_network_os }}"
+        ansible_connection: "{{ hostvars[item].ansible_connection }}"
+        groups: discovered switches
+      loop: "{{ tmp.device_list }}"
