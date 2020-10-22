@@ -1,0 +1,20 @@
+---
+- name: Implement vlan changes
+  hosts: discovered_switches
+  gather_facts: false
+  vars:
+    cmd_list: {}
+    ansible_user: "{{ net_user }}"
+    ansible_password: "{{ net_password }}"
+    result: "{{ hostvars['localhost']['result'] }}"
+    
+  tasks:
+    - name: Configure interfaces
+      include_tasks: "{{ playbook_dir }}/tasks/configure_interfaces.yml"
+      loop: "{{ result[inventory_hostname] }}"
+      loop_control:
+        loop_var: interface
+        
+    - name: List of commands executed on {{ inventory_hostname }}
+      debug:
+        msg: "{{ cmd_list }}"
