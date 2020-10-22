@@ -1,0 +1,6 @@
+---
+- name: Discover interfaces
+  import_playbook: interface_discover.yml
+  
+- name: Implement vlan changes on discovered interfaces
+  import_playbook: vlan_implement.yml
